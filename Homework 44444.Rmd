@@ -1,0 +1,143 @@
+---
+title: "Homework 4"
+author: "Aolong Zhang"
+date: "2023-10-06"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r}
+
+library(readxl)
+Tesla_sales <- read_excel("C:/Users/17215/OneDrive/Desktop/Tesla sales.xlsx")
+View(Tesla_sales)
+
+class(Tesla_sales)
+
+## convert dataset to time series
+data1 = ts(Tesla_sales$`Total Sales`, start = c(2015),end = c(2023,6),
+           frequency = 12)
+
+library(fpp)
+library(fpp2)
+library(TTR)
+
+## dataset infomration
+attributes(Tesla_sales)
+plot(data1,ylab= "Total Sales")
+
+## acf table shows there is strong increasing trend
+acf(data1)
+
+
+## take mean of all avaible history
+mean_forecast = meanf(data1,5)
+plot(mean_forecast)
+
+
+
+## naive
+naive_forecast = naive(data1,5)
+plot(naive_forecast)
+naive_forecast
+
+##random walk
+rwf_forecasting = rwf(data1,5)
+rwf_forecasting = rwf(data1,5,drift = TRUE)
+plot(rwf_forecasting)
+
+
+## Seasonal naive
+snaive_forecast = snaive(data1,5)
+plot(snaive_forecast)
+
+
+## Moving average (5 and 9)
+MA5_forecast = ma(data1,order = 5)
+MA9_forecast = ma(data1,order = 9)
+MA5 = forecast(MA5_forecast,h=5)
+MA9 = forecast(MA9_forecast,h=5)
+
+
+##plot all line in the chart
+plot(mean_forecast)
+lines(naive_forecast$mean,col="sienna")
+lines(rwf_forecasting$mean,col="green")
+lines(snaive_forecast$mean,col="orange")
+lines(MA5_forecast,col="purple")
+lines(MA9_forecast,col="red")
+
+
+
+## decomposition
+
+ets_forecast = ets(data1)
+plot(ets_forecast)
+
+ets_forecast$mse
+
+
+##SSE
+SSE_Simple = HoltWinters(data1,beta = FALSE,gamma = FALSE)
+plot(SSE_Simple)
+SSE_Simple$SSE
+
+## SSE with trend
+SSE_trend = HoltWinters(data1,gamma = FALSE)
+plot(SSE_trend)
+SSE_trend$SSE
+
+
+## Holts winters
+SSE_winters = HoltWinters(data1)
+plot(SSE_winters)
+SSE_winters$SSE
+
+##Forecast
+forecast_ets = forecast(ets_forecast,h=5)
+plot(forecast_ets)
+
+forecast_HW = forecast(SSE_winters,h=5)
+plot(forecast_HW)
+
+accuracy(snaive_forecast)
+accuracy(mean_forecast)
+accuracy(rwf_forecasting)
+accuracy(naive_forecast)
+accuracy(MA5)
+accuracy(MA9)
+accuracy(forecast_ets)
+accuracy(forecast_HW)
+
+
+```
+
+#Question 1  
+Did 7 differnt models: naive, mean, seasonality,random walk, moving averge 5 period and 9 period,exponential smoothing,and Holts winters.
+
+#Question 2  
+all my models are to predict next 5 month sales.For naive,mean,moving average, and random walk, those model did nto include any trend and sensonality.For the seasonality model, becasuse from the acl chart we see the data has no seasonal pattern,the forecsating is not very accuret, you can also see from the chart,the organge line.For ets model,I got ETS(A,N,N),which means the data is simple additive model without any trend or seasonality.For Holts Winters,I tried 3 situations 1.without beta and gamma, 2.with only beta and alpha,and 3.defult.And turns out the defult is better with smallest SSE.
+
+
+
+#question 3  
+
+```{r}
+plot(mean_forecast)
+lines(naive_forecast$mean,col="sienna")
+lines(rwf_forecasting$mean,col="green")
+lines(snaive_forecast$mean,col="orange")
+lines(MA5_forecast,col="purple")
+lines(MA5$mean,col="purple")
+lines(MA9$mean,col="red")
+lines(MA9_forecast,col="red")
+lines(forecast_HW$mean,col="grey")
+lines(forecast_ets$mean,col="khaki")
+```
+
+
+
+#Question 4  
+I choose MAE(mean absolute error) as the indicator to assess the accuracy for each model, and the result is the moving average(9 period) is the best one with the minimum MAE.
